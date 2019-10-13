@@ -1,0 +1,39 @@
+<launch>
+
+  <!-- The argument to determine whether to use a xacro file. -->
+  <arg name="xacro" default="false" />
+
+  <!-- What is the name of the file to use? This can be passed into the launch file.-->
+  <arg if="$(arg xacro)" name="filename" default="my_robot.xacro" />
+  <arg unless="$(arg xacro)" name="filename" default="urdf_from_xacro.urdf" />
+
+  <!-- The full path of the URDF file can be passed into the launch file instead.-->
+  <arg name="file" default="$(find my_robot)/urdf/$(arg filename)" />
+
+  <!-- The argument to determine whether to use the GUI. -->
+  <arg name="gui" default="true" />
+
+  <!-- Use the file argument as the name of the file used lto set the /robot_description parameter on the parameter server -->
+  <param if="$(arg xacro)" name="robot_description" command="$(find xacro)/xacro --inorder $(arg file)" />
+  <param unless="$(arg xacro)" name="robot_description" textfile="$(arg file)" />
+
+  <!-- Use the gui argument to set the /use_gui on the parameter server -->
+  <param name="use_gui" value="$(arg gui)" />
+
+  <!-- Run the robot_state_publisher. -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" />
+
+  <!-- Run RVIZ and use a specific configuration file. If RVIZ is closed, close everything. -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find my_robot)/config/config.rviz" required="true" />
+
+  <!-- If gui is true, run the joint_state_publisher. -->
+  <node if="$(arg gui)" pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" />
+
+  <!-- Run wheel_left, wheel_right and wheel_center. -->
+  <node unless="$(arg gui)" pkg="tf2_ros" type="static_transform_publisher" name="wheel_left_publisher" args="-0.1 0.4 0.0 0.0 0.0 -1.57 base wheel_left" />
+
+  <node unless="$(arg gui)" pkg="tf2_ros" type="static_transform_publisher" name="wheel_right_publisher" args="-0.1 -0.4 0.0 0.0 0.0 -1.57 base wheel_right" />
+
+  <node unless="$(arg gui)" pkg="tf2_ros" type="static_transform_publisher" name="wheel_center_publisher" args="0.1 0.0 0.0 0.0 0.0 -1.57 base wheel_center" />
+
+</launch>
